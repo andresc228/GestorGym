@@ -1,16 +1,3 @@
-#!/usr/bin/env python3
-# gestor_gimnasio.py
-# Gestor de gimnasio - todo en un solo archivo
-# Mantiene las clases solicitadas y la interfaz con tkinter.
-# Funcionalidades:
-# - Registro/Inicio de sesión
-# - Registrar Cliente/Entrenador (cliente con "objetivo" por Combobox)
-# - Vincular cliente a entrenador
-# - Crear plan y rutina AUTOMÁTICOS para clientes sin entrenador según objetivo
-# - Entrenador puede crear plan/rutina PERSONALIZADA sólo para sus clientes (formularios estructurados)
-# - Guardado en memoria (visible en pestañas)
-# - Ventanas grandes con scroll y botones legibles
-
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 import tkinter as tk
@@ -18,9 +5,7 @@ from tkinter import ttk, messagebox, simpledialog
 from datetime import datetime, date
 import uuid
 
-# -------------------------
-# MODELOS (POO / dataclasses)
-# -------------------------
+
 @dataclass
 class Usuario:
     username: str
@@ -72,9 +57,7 @@ class ProgresoFisico:
     repeticiones: Dict[str, int] = field(default_factory=dict)
     observaciones: str = ""
 
-# -------------------------
-# REPOSITORIO en memoria
-# -------------------------
+
 class Repositorio:
     def __init__(self):
         self.usuarios: Dict[str, Usuario] = {}
@@ -84,7 +67,7 @@ class Repositorio:
         self.planes: Dict[str, PlanAlimentacion] = {}
         self.progresos: Dict[str, ProgresoFisico] = {}
 
-    # agregar
+
     def add_entrenador(self, ent: Entrenador):
         self.entrenadores[ent.id] = ent
         self.usuarios[ent.id] = ent
@@ -93,13 +76,13 @@ class Repositorio:
         self.clientes[cli.id] = cli
         self.usuarios[cli.id] = cli
 
-    # vincular
+
     def vincular_cliente_a_entrenador(self, cliente_id: str, entrenador_id: str):
         cli = self.clientes.get(cliente_id)
         ent = self.entrenadores.get(entrenador_id)
         if not cli or not ent:
             return False
-        # remover prev
+
         if cli.entrenador_id and cli.entrenador_id in self.entrenadores:
             prev = self.entrenadores[cli.entrenador_id]
             if cliente_id in prev.clientes_ids:
@@ -109,7 +92,7 @@ class Repositorio:
             ent.clientes_ids.append(cliente_id)
         return True
 
-    # crear plan automático según objetivo
+
     def crear_plan_automatico(self, cliente_id: str) -> PlanAlimentacion:
         cli = self.clientes.get(cliente_id)
         if not cli:
@@ -159,7 +142,7 @@ class Repositorio:
         cli.planes_ids.append(plan.id)
         return plan
 
-    # crear rutina automática según objetivo
+
     def crear_rutina_automatica(self, cliente_id: str, entrenador_id: Optional[str] = None) -> RutinaEjercicio:
         cli = self.clientes.get(cliente_id)
         if not cli:
@@ -216,7 +199,7 @@ class Repositorio:
                 "Sábado": [{"ejercicio": "Caminata larga", "series": 1, "reps": "45-60 min"}],
                 "Domingo": [{"ejercicio": "Descanso activo (yoga)"}]
             }
-        else:  # salud
+        else:
             intensidad = "Baja-Media"
             semana = {
                 "Lunes": [
@@ -243,20 +226,20 @@ class Repositorio:
         cli.rutinas_ids.append(rutina.id)
         return rutina
 
-    # guardar progreso
+
     def registrar_progreso(self, progreso: ProgresoFisico):
         self.progresos[progreso.id] = progreso
         cli = self.clientes.get(progreso.cliente_id)
         if cli:
             cli.progreso_historial.append(progreso.id)
 
-    # crear rutina personalizada por entrenador (estructura)
+
     def crear_rutina_personalizada(self, entrenador_id: str, cliente_id: str, ejercicios_semana: Dict[str, List[Dict]], intensidad: str="Personalizada") -> RutinaEjercicio:
         ent = self.entrenadores.get(entrenador_id)
         cli = self.clientes.get(cliente_id)
         if not ent or not cli:
             raise ValueError("Entrenador o cliente no encontrado")
-        # verificar vinculación
+
         if cliente_id not in ent.clientes_ids:
             raise PermissionError("Entrenador no está vinculado a este cliente")
         rutina = RutinaEjercicio(cliente_id=cliente_id, entrenador_id=entrenador_id, ejercicios_semana=ejercicios_semana, intensidad=intensidad)
@@ -264,7 +247,7 @@ class Repositorio:
         cli.rutinas_ids.append(rutina.id)
         return rutina
 
-    # crear plan personalizado por entrenador
+
     def crear_plan_personalizado(self, entrenador_id: str, cliente_id: str, detalle_comidas: Dict[str, str], calorias: int, comidas_por_dia: int, observaciones: str="") -> PlanAlimentacion:
         ent = self.entrenadores.get(entrenador_id)
         cli = self.clientes.get(cliente_id)
@@ -279,9 +262,7 @@ class Repositorio:
 
 repo = Repositorio()
 
-# -------------------------
-# INTERFAZ (tkinter)
-# -------------------------
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -290,7 +271,7 @@ class App(tk.Tk):
         self.resizable(False, False)
         self.usuario_actual: Optional[Usuario] = None
 
-        # Frames
+
         self.frame_login = FrameLogin(self)
         self.frame_dashboard = FrameDashboard(self)
 
@@ -308,7 +289,7 @@ class App(tk.Tk):
         self.frame_login.clear_fields()
         self.frame_login.pack(fill="both", expand=True)
 
-# ---------- Frame de Login ----------
+
 class FrameLogin(tk.Frame):
     def __init__(self, master):
         super().__init__(master)
@@ -355,7 +336,7 @@ class FrameLogin(tk.Frame):
         dlg = RegistroUsuarioDialog(self.master)
         self.wait_window(dlg)
 
-# ---------- Registro de usuario ----------
+
 class RegistroUsuarioDialog(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
@@ -381,7 +362,7 @@ class RegistroUsuarioDialog(tk.Toplevel):
         self.e_user = tk.Entry(form, width=40); self.e_user.grid(row=1, column=1, pady=6)
         self.e_pass = tk.Entry(form, width=40, show="*"); self.e_pass.grid(row=2, column=1, pady=6)
 
-        # campos extras para cliente
+
         tk.Label(form, text="Objetivo (clientes):").grid(row=3, column=0, sticky="e", pady=6)
         self.combo_obj = ttk.Combobox(form, values=["Más fuerza", "Bajar de peso", "Salud"], state="readonly", width=37)
         self.combo_obj.grid(row=3, column=1, pady=6)
@@ -390,7 +371,7 @@ class RegistroUsuarioDialog(tk.Toplevel):
         tk.Label(form, text="Estado físico inicial:").grid(row=4, column=0, sticky="e", pady=6)
         self.e_estado = tk.Entry(form, width=40); self.e_estado.grid(row=4, column=1, pady=6)
 
-        # campo para entrenador
+
         tk.Label(form, text="Nivel experiencia (entrenadores):").grid(row=5, column=0, sticky="e", pady=6)
         self.e_nivel = tk.Entry(form, width=40); self.e_nivel.grid(row=5, column=1, pady=6)
 
@@ -407,7 +388,7 @@ class RegistroUsuarioDialog(tk.Toplevel):
         if not nombre or not user or not pwd:
             messagebox.showwarning("Datos incompletos", "Complete nombre, usuario y contraseña.")
             return
-        # verificar usuario
+
         for u in repo.usuarios.values():
             if u.username == user:
                 messagebox.showerror("Error", "El nombre de usuario ya existe.")
@@ -423,7 +404,7 @@ class RegistroUsuarioDialog(tk.Toplevel):
             messagebox.showinfo("Entrenador registrado", f"Entrenador {nombre} registrado correctamente.")
         self.destroy()
 
-# ---------- Dashboard ----------
+
 class FrameDashboard(tk.Frame):
     def __init__(self, master):
         super().__init__(master)
@@ -438,7 +419,7 @@ class FrameDashboard(tk.Frame):
         botones = tk.Frame(self)
         botones.pack(pady=6, fill="x")
 
-        # Botones de acción (agrandados)
+
         tk.Button(botones, text="Registrar Cliente", width=20, height=2, command=self.registrar_cliente).pack(side="left", padx=6)
         tk.Button(botones, text="Registrar Entrenador", width=20, height=2, command=self.registrar_entrenador).pack(side="left", padx=6)
         tk.Button(botones, text="Vincular Cliente a Entrenador", width=26, height=2, command=self.vincular_cliente).pack(side="left", padx=6)
@@ -446,13 +427,13 @@ class FrameDashboard(tk.Frame):
         tk.Button(botones, text="Crear Rutina (auto)", width=22, height=2, command=self.crear_rutina_auto).pack(side="left", padx=6)
         tk.Button(botones, text="Ver Progreso de Cliente", width=20, height=2, command=self.ver_progreso).pack(side="left", padx=6)
 
-        # Si usuario es entrenador, botones extra para crear personalizado
+
         self.frame_ent_ops = tk.Frame(self)
         self.frame_ent_ops.pack(pady=6)
         tk.Button(self.frame_ent_ops, text="Crear Rutina personalizada (entrenador)", width=30, height=2, command=self.crear_rutina_personalizada).pack(side="left", padx=6)
         tk.Button(self.frame_ent_ops, text="Crear Plan personalizado (entrenador)", width=30, height=2, command=self.crear_plan_personalizado).pack(side="left", padx=6)
 
-        # Area con pestañas
+
         area = tk.Frame(self)
         area.pack(fill="both", expand=True, padx=8, pady=8)
 
@@ -470,7 +451,7 @@ class FrameDashboard(tk.Frame):
         self.tabs.add(self.tab_prog, text="Progresos")
         self.tabs.pack(fill="both", expand=True)
 
-        # Treeviews
+
         self.tree_ent = ttk.Treeview(self.tab_ent, columns=("id","nombre","nivel","clientes"), show="headings")
         for c in ("id","nombre","nivel","clientes"):
             self.tree_ent.heading(c, text=c)
@@ -510,11 +491,11 @@ class FrameDashboard(tk.Frame):
         else:
             rol = "Usuario"
         self.lbl_user.config(text=f"Usuario: {u.username} ({rol})")
-        # ocultar botones de entrenador si no es entrenador
+
         if not isinstance(u, Entrenador):
             self.frame_ent_ops.forget()
         else:
-            # volver a mostrar
+
             self.frame_ent_ops.pack(pady=6)
         self._refresh_trees()
 
@@ -538,7 +519,7 @@ class FrameDashboard(tk.Frame):
             cli_name = repo.clientes[pr.cliente_id].nombre if pr.cliente_id in repo.clientes else pr.cliente_id
             self.tree_prog.insert("", "end", values=(pr.id, cli_name, pr.fecha, pr.peso, pr.observaciones))
 
-    # acciones (simple wrapper)
+
     def registrar_cliente(self):
         dlg = RegistroUsuarioDialog(self.master)
         self.wait_window(dlg)
@@ -580,14 +561,14 @@ class FrameDashboard(tk.Frame):
         if not sel.selected_id:
             return
         cli = repo.clientes[sel.selected_id]
-        # Si tiene entrenador, la política: si tiene entrenador, el entrenador debe crear personalizado; si el usuario quiere auto, permitimos auto only if no entrenador.
+
         if cli.entrenador_id:
-            # tiene entrenador -> informar que solo entrenador puede crear personalizado; preguntar si desea crear automático igual
+
             resp = messagebox.askyesno("Cliente con entrenador", "Este cliente tiene entrenador asignado. ¿Deseas crear un plan automático igualmente? (Se recomienda que el entrenador cree uno personalizado).")
             if not resp:
                 return
         plan = repo.crear_plan_automatico(sel.selected_id)
-        # mostrar en ventana amplia
+
         MostrarPlanDialog(self, plan).wait_window()
         self._refresh_trees()
 
@@ -698,7 +679,7 @@ class FrameDashboard(tk.Frame):
             textos.append("No hay registros de peso.")
         messagebox.showinfo("Detalles del Cliente", "\n".join(textos))
 
-    # ENTRENADOR - formularios estructurados (solo para clientes vinculados)
+
     def crear_rutina_personalizada(self):
         # Solo visible/usable si usuario actual es entrenador
         if not isinstance(self.master.usuario_actual, Entrenador):
@@ -708,7 +689,7 @@ class FrameDashboard(tk.Frame):
         if not ent.clientes_ids:
             messagebox.showwarning("Sin clientes vinculados", "No tienes clientes vinculados.")
             return
-        # seleccionar cliente (solo entre sus clientes)
+
         opciones = [(cid, repo.clientes[cid].nombre) for cid in ent.clientes_ids if cid in repo.clientes]
         sel = SelectionDialog(self, "Seleccionar cliente (para rutina personalizada)", opciones)
         self.wait_window(sel)
@@ -751,7 +732,7 @@ class FrameDashboard(tk.Frame):
             except Exception as e:
                 messagebox.showerror("Error", str(e))
 
-# ---------- Dialogos auxiliares ----------
+
 class SelectionDialog(tk.Toplevel):
     def __init__(self, parent, title, opciones):
         super().__init__(parent)
@@ -781,7 +762,7 @@ class SelectionDialog(tk.Toplevel):
         self.selected_id = vals[0]
         self.destroy()
 
-# Mostrar rutina (ventana amplia con scroll)
+
 class MostrarRutinaDialog(tk.Toplevel):
     def __init__(self, parent, rutina: RutinaEjercicio):
         super().__init__(parent)
@@ -792,7 +773,7 @@ class MostrarRutinaDialog(tk.Toplevel):
 
         lbl = tk.Label(self, text=f"Rutina (intensidad: {rutina.intensidad})", font=("Arial", 12))
         lbl.pack(pady=6)
-        # Text con scrollbar
+
         frm = tk.Frame(self)
         frm.pack(fill="both", expand=True, padx=8, pady=8)
         txt = tk.Text(frm, wrap="word")
@@ -800,7 +781,7 @@ class MostrarRutinaDialog(tk.Toplevel):
         txt.configure(yscrollcommand=sb.set)
         txt.pack(side="left", fill="both", expand=True)
         sb.pack(side="right", fill="y")
-        # construir contenido
+
         contenido = []
         for dia, ejercicios in rutina.ejercicios_semana.items():
             contenido.append(f"{dia}:\n")
@@ -812,7 +793,7 @@ class MostrarRutinaDialog(tk.Toplevel):
         txt.config(state="disabled")
         tk.Button(self, text="Cerrar", command=self.destroy, width=12, height=2).pack(pady=6)
 
-# Mostrar plan
+
 class MostrarPlanDialog(tk.Toplevel):
     def __init__(self, parent, plan: PlanAlimentacion):
         super().__init__(parent)
@@ -840,7 +821,7 @@ class MostrarPlanDialog(tk.Toplevel):
         txt.config(state="disabled")
         tk.Button(self, text="Cerrar", command=self.destroy, width=12, height=2).pack(pady=6)
 
-# Ver progreso
+
 class VerProgresoDialog(tk.Toplevel):
     def __init__(self, parent, cliente: Cliente):
         super().__init__(parent)
@@ -862,7 +843,7 @@ class VerProgresoDialog(tk.Toplevel):
                 tree.insert("", "end", values=(p.fecha, p.peso, medidas_text, p.observaciones))
         tk.Button(self, text="Cerrar", command=self.destroy, width=12, height=2).pack(pady=6)
 
-# Dialogo para crear rutina personalizada (formularios estructurados)
+
 class RutinaPersonalizadaDialog(tk.Toplevel):
     def __init__(self, parent, entrenador: Entrenador, cliente: Cliente):
         super().__init__(parent)
@@ -870,32 +851,32 @@ class RutinaPersonalizadaDialog(tk.Toplevel):
         self.geometry("820x560")
         self.transient(parent)
         self.grab_set()
-        self.result = None  # (ejercicios_semana, intensidad)
+        self.result = None
 
         tk.Label(self, text="Crear Rutina Personalizada (rellenar por días)", font=("Arial", 12)).pack(pady=6)
-        # Selector de intensidad
+
         frm_top = tk.Frame(self)
         frm_top.pack(pady=4)
         tk.Label(frm_top, text="Intensidad:").pack(side="left")
         self.cmb_int = ttk.Combobox(frm_top, values=["Baja", "Media", "Alta", "Personalizada"], state="readonly", width=15)
         self.cmb_int.pack(side="left", padx=6)
         self.cmb_int.set("Personalizada")
-        # Area con pestañas por dia para agregar ejercicios
+
         tab_parent = ttk.Notebook(self)
         dias = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"]
-        self.textareas = {}  # dia -> treeview de ejercicios
+        self.textareas = {}
         self.ejercicios_data = {d: [] for d in dias}
         for d in dias:
             frame = tk.Frame(tab_parent)
             tab_parent.add(frame, text=d)
-            # columnas: ejercicio, series, reps, nota
+
             tree = ttk.Treeview(frame, columns=("ejercicio","series","reps","nota"), show="headings", height=10)
             for c, h in [("ejercicio","Ejercicio"),("series","Series"),("reps","Reps"),("nota","Nota")]:
                 tree.heading(c, text=h)
                 tree.column(c, width=150)
             tree.pack(fill="both", expand=True, padx=6, pady=6)
             self.textareas[d] = tree
-            # controls to add exercise
+
             addfrm = tk.Frame(frame)
             addfrm.pack(fill="x", pady=4, padx=6)
             self.ej_name = tk.Entry(addfrm, width=25); self.ej_name.pack(side="left", padx=4)
@@ -906,7 +887,7 @@ class RutinaPersonalizadaDialog(tk.Toplevel):
             self.ej_reps.insert(0, "10-12")
             self.ej_note = tk.Entry(addfrm, width=20); self.ej_note.pack(side="left", padx=4)
             self.ej_note.insert(0, "Opcional")
-            # boton agregar para este dia (closure wraps)
+
             def make_add(day):
                 def add():
                     nombre = self.ej_name.get().strip()
@@ -920,7 +901,7 @@ class RutinaPersonalizadaDialog(tk.Toplevel):
                 return add
             b = tk.Button(addfrm, text="Agregar ejercicio", command=make_add(d), width=16)
             b.pack(side="left", padx=6)
-            # boton eliminar seleccionado
+
             def make_del(day):
                 def delete():
                     sel = self.textareas[day].selection()
@@ -940,7 +921,7 @@ class RutinaPersonalizadaDialog(tk.Toplevel):
         tk.Button(btns, text="Cancelar", command=self.destroy, width=12, height=2).pack(side="left", padx=6)
 
     def crear(self):
-        # leer todos los treeviews y construir dict
+
         ejercicios_semana = {}
         for dia, tree in self.textareas.items():
             filas = []
@@ -952,7 +933,7 @@ class RutinaPersonalizadaDialog(tk.Toplevel):
         self.result = (ejercicios_semana, intensidad)
         self.destroy()
 
-# Dialogo para plan personalizado
+
 class PlanPersonalizadoDialog(tk.Toplevel):
     def __init__(self, parent, entrenador: Entrenador, cliente: Cliente):
         super().__init__(parent)
@@ -960,13 +941,13 @@ class PlanPersonalizadoDialog(tk.Toplevel):
         self.geometry("780x520")
         self.transient(parent)
         self.grab_set()
-        self.result = None  # (detalle_comidas, calorias, comidas_por_dia, observaciones)
+        self.result = None
 
         tk.Label(self, text="Plan personalizado (complete comidas)", font=("Arial", 12)).pack(pady=6)
         frm = tk.Frame(self)
         frm.pack(fill="both", expand=True, padx=8, pady=6)
 
-        # calorias y comidas/dia
+
         top = tk.Frame(frm)
         top.pack(fill="x", pady=4)
         tk.Label(top, text="Calorías totales:").pack(side="left")
@@ -976,7 +957,7 @@ class PlanPersonalizadoDialog(tk.Toplevel):
         self.e_com = tk.Entry(top, width=6); self.e_com.pack(side="left", padx=6)
         self.e_com.insert(0, "5")
 
-        # cuadros para desayuno, media mañana, almuerzo, merienda, cena
+
         self.comidas = {}
         labels = ["Desayuno","Media mañana","Almuerzo","Merienda","Cena"]
         for lab in labels:
@@ -1014,11 +995,9 @@ class PlanPersonalizadoDialog(tk.Toplevel):
         self.result = (detalle, calorias, comidas_por_dia, obs)
         self.destroy()
 
-# -------------------------
-# Punto de entrada
-# -------------------------
+
 if __name__ == "__main__":
-    # cuentas de ejemplo para que puedas probar rápido
+
     if not repo.entrenadores and not repo.clientes:
         ent = Entrenador(username="ent1", password="1234", nombre="Carlos Perez", nivel_experiencia="Senior")
         repo.add_entrenador(ent)
